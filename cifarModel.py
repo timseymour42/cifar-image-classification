@@ -1,6 +1,9 @@
 import tensorflow as tf
 from tensorflow.keras.datasets import cifar10
+from tensorflow.keras.applications import VGG16
 import ssl
+import numpy as np
+from scipy import stats
 ssl._create_default_https_context = ssl._create_unverified_context
 
 # Refer to cifarDataPrep notebook for step-by-step explanation of data preparation
@@ -49,6 +52,23 @@ base_model = tf.keras.Sequential([
     tf.keras.layers.Dense(num_classes, activation='softmax')
 ])
 
+# Building a transfer learning model to improve upon the baseline model
+# Load the VGG16 model pre-trained on ImageNet
+# By setting include_top=False, we exclude the fully connected layers at the top of the VGG16 model
+vgg_model = VGG16(weights='imagenet', include_top=False, input_shape=(32, 32, 3))
+
+# Freeze the pre-trained layers
+for layer in vgg_model.layers:
+    layer.trainable = False
+
+vgg16_model = tf.keras.Sequential([
+    vgg_model,
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(512, activation='relu'),
+    tf.keras.layers.Dropout(.5),
+    tf.keras.layers.Dense(10, activation='softmax')
+])
+
 def run_model(model, batch_size=64, epochs=10):
     # Compile the model
     # adam optimizer: 
@@ -68,11 +88,30 @@ def run_model(model, batch_size=64, epochs=10):
     # epoch:
     # - a complete iteration over the entire training dataset
     model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, validation_data=(X_test, y_test))
+    return model
 
-    # Evaluate the model
-    loss, accuracy = model.evaluate(X_test, y_test)
-    print(f'Test loss: {loss:.4f}')
-    print(f'Test accuracy: {accuracy:.4f}')
-    return loss, accuracy
+    
 
-base_loss, base_accuracy = run_model(base_model, 64, 10)
+base_model_trained = run_model(base_model)
+vgg16_model_trained = run_model(vgg16_model)
+
+# Evaluate base model
+base_model_loss, base_model_accuracy = base_model_trained.evaluate(X_test, y_test)
+print("Base Model:")
+print(f"Loss: {base_model_loss:.4f}")
+print(f"Accuracy: {base_model_accuracy:.4f}")
+
+# Evaluate VGG16 model
+vgg16_model_loss, vgg16_model_accuracy = vgg16_model_trained.evaluate(X_test, y_test)
+print("VGG16 Model:")
+print(f"Loss: {vgg16_model_loss:.4f}")
+print(f"Accuracy: {vgg16_model_accuracy:.4f}")
+
+# Compare model performances
+print("\nModel Performance Comparison:")
+if base_model_accuracy > vgg16_model_accuracy:
+    print("Base model performs better.")
+elif base_model_accuracy < vgg16_model_accuracy:
+    print("VGG16 model performs better.")
+else:
+    print("Both models have the same accuracy.")
