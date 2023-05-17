@@ -3,6 +3,7 @@ from tensorflow.keras.datasets import cifar10
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
+# Refer to cifarDataPrep notebook for step-by-step explanation of data preparation
 # Load the CIFAR-10 dataset
 (X_train, y_train), (X_test, y_test) = cifar10.load_data()
 
@@ -15,8 +16,8 @@ num_classes = 10
 y_train = tf.keras.utils.to_categorical(y_train, num_classes)
 y_test = tf.keras.utils.to_categorical(y_test, num_classes)
 
-# Build the model
-model = tf.keras.Sequential([
+# Build the baseline model
+base_model = tf.keras.Sequential([
     # Convolutional layers are crucial for capturing spatial patterns in images. The chosen configuration 
     # consists of two pairs of Conv2D layers. The first pair has 32 filters, and the second pair has 64 filters. 
     # Each Conv2D layer uses a 3x3 filter size, which is a common choice. These layers apply convolution operations 
@@ -39,8 +40,8 @@ model = tf.keras.Sequential([
     # This flattening operation is necessary to connect the convolutional layers to the subsequent dense (fully connected) layers.
     tf.keras.layers.Flatten(),
     # Dense layers are fully connected layers where each neuron is connected to every neuron in the previous layer. In this model, 
-    # two dense layers are added with 512 units each. These layers provide higher-level abstractions by combining features learned 
-    # from the convolutional layers. The use of ReLU activation in the dense layers helps introduce non-linearity to the model.
+    # there is one dense layer are added with 512 units. This layer provides higher-level abstractions by combining features learned 
+    # from the convolutional layers. The use of ReLU activation in the dense layer helps introduce non-linearity to the model.
     tf.keras.layers.Dense(512, activation='relu'),
     tf.keras.layers.Dropout(0.5),
     # The final dense layer has the number of units equal to the number of classes in the dataset (10 in this case). 
@@ -48,13 +49,30 @@ model = tf.keras.Sequential([
     tf.keras.layers.Dense(num_classes, activation='softmax')
 ])
 
-# Compile the model
-model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+def run_model(model, batch_size=64, epochs=10):
+    # Compile the model
+    # adam optimizer: 
+    # - adaptive learning rate: adjusts the step size for each parameter based on that parameter's performance
+    # - momentum optimization: helps avoid local minima, achieve faster convergence
+    # categorical crossentropy: 
+    # - takes the predicted probabilities and the true class labels and calculates a single number that 
+    #   represents the dissimilarity between them
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-# Train the model
-model.fit(X_train, y_train, batch_size=64, epochs=10, validation_data=(X_test, y_test))
+    # Train the model
+    # batch_size:
+    # - batches refer to subsets of the training data that are processed together during the training of a neural network. 
+    #   Instead of feeding all the training examples at once, the data is divided into smaller groups or batches, and the 
+    #   model is updated based on the average gradients calculated from each batch.
+    # - Standard practice is to choose a power-of-2 batch size
+    # epoch:
+    # - a complete iteration over the entire training dataset
+    model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, validation_data=(X_test, y_test))
 
-# Evaluate the model
-loss, accuracy = model.evaluate(X_test, y_test)
-print(f'Test loss: {loss:.4f}')
-print(f'Test accuracy: {accuracy:.4f}')
+    # Evaluate the model
+    loss, accuracy = model.evaluate(X_test, y_test)
+    print(f'Test loss: {loss:.4f}')
+    print(f'Test accuracy: {accuracy:.4f}')
+    return loss, accuracy
+
+base_loss, base_accuracy = run_model(base_model, 64, 10)
