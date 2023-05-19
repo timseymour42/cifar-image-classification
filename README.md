@@ -32,7 +32,7 @@ The performance of the baseline model and the transfer learning model are compar
 
 ## Resources
 
-- Medium Article: [CIFAR-10 Image Classification with TensorFlow](link-to-medium-article)
+- Medium Article: [CIFAR-10 Image Classification with TensorFlow](https://medium.com/@timseymour1042/cifar-10-image-classification-with-tensorflow-1d6b23cf5f9a)
 - CIFAR-10 Dataset: [https://www.cs.toronto.edu/~kriz/cifar.html](https://www.cs.toronto.edu/~kriz/cifar.html)
 - TensorFlow Documentation: [https://www.tensorflow.org/](https://www.tensorflow.org/)
 
