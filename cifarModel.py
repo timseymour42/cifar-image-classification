@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras.datasets import cifar10
 from tensorflow.keras.applications import VGG16
+from tensorflow.keras import regularizers
 import ssl
 import numpy as np
 from scipy import stats
@@ -58,14 +59,13 @@ base_model = tf.keras.Sequential([
 vgg_model = VGG16(weights='imagenet', include_top=False, input_shape=(32, 32, 3))
 
 # Freeze the pre-trained layers
-for layer in vgg_model.layers:
-    layer.trainable = False
+for layer in range(11):
+    vgg_model.layers[layer].trainable = False
 
 vgg16_model = tf.keras.Sequential([
     vgg_model,
     tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(512, activation='relu'),
-    tf.keras.layers.Dropout(.5),
+    tf.keras.layers.Dense(32, activation='relu', kernel_regularizer=regularizers.l2(0.01)),
     tf.keras.layers.Dense(10, activation='softmax')
 ])
 
